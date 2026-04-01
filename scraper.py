@@ -101,7 +101,8 @@ class OzBargainScraper:
                     forbidden_detected = True
                     return deals, forbidden_detected
 
-                await page.wait_for_load_state("networkidle", timeout=30000)
+                # OzBargain pages can keep background requests open; avoid strict networkidle waits.
+                await page.wait_for_timeout(3500)
                 await self._human_pause()
 
                 title_nodes = page.locator("h2.title a")
