@@ -1,4 +1,4 @@
-playwright
+playwright==1.40.0
 playwright-stealth
 openai
 anthropic
