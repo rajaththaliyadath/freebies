@@ -13,7 +13,7 @@ class Config:
     # Targets
     target_url: str = os.getenv(
         "TARGET_URL",
-        "https://www.ozbargain.com.au/tag/free",
+        "https://www.ozbargain.com.au/tag/gift-card",
     )
 
     # Runtime
