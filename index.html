@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Freebies Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      body {
+        background: #000;
+      }
+      .panel {
+        background: rgba(10, 10, 10, 0.75);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(8px);
+      }
+      .nav-link {
+        color: #d4d4d8;
+        transition: color 180ms ease;
+      }
+      .nav-link:hover {
+        color: #ffffff;
+      }
+      .hero-name {
+        letter-spacing: 0.02em;
+        background: linear-gradient(180deg, #fafafa 20%, #a1a1aa 80%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .arch-shell {
+        width: min(100%, 440px);
+        aspect-ratio: 3 / 3.6;
+        border-radius: 220px 220px 24px 24px;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: #0a0a0a;
+      }
+      .editorial-line {
+        border-color: rgba(255, 255, 255, 0.12);
+      }
+      .deal-card {
+        opacity: 0;
+        transform: translateY(10px);
+        animation: cardIn 380ms ease forwards;
+      }
+      @keyframes cardIn {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-zinc-100">
+    <div class="mx-auto max-w-7xl px-6 py-8">
+      <header class="mb-8 flex items-center justify-between border-b border-white/10 pb-5">
+        <div class="text-2xl font-semibold tracking-wide">FREEBIES HUB</div>
+        <nav id="topTabs" class="flex items-center gap-8 text-lg">
+          <button data-tab="home" class="nav-link text-white">Home</button>
+          <button data-tab="deals" class="nav-link">Deals</button>
+        </nav>
+      </header>
+
+      <section id="homePanel" class="relative min-h-[75vh]">
+        <div class="mx-auto flex max-w-4xl flex-col items-center text-center">
+          <p class="mt-4 text-3xl text-zinc-300">Freebies Curator</p>
+          <h1 class="hero-name mt-3 text-6xl font-bold uppercase sm:text-7xl">OZBARGAIN DEALS</h1>
+          <div class="arch-shell mt-8">
+            <img
+              src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='980'%3E%3Crect width='100%25' height='100%25' fill='%23000000'/%3E%3Ctext x='50%25' y='46%25' text-anchor='middle' fill='%23a1a1aa' font-family='Inter,Arial,sans-serif' font-size='42'%3ELIVE FREEBIES%3C/text%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' fill='%23f4f4f5' font-family='Inter,Arial,sans-serif' font-size='76' font-weight='700'%3EDEALS%3C/text%3E%3C/svg%3E"
+              alt="Freebies hero"
+              class="h-full w-full object-cover"
+            />
+          </div>
+        </div>
+
+        <div class="absolute bottom-4 left-0 text-lg text-zinc-300">hello@freebieshub.local</div>
+        <div class="absolute bottom-4 right-0 flex items-center gap-4 text-zinc-300">
+          <span class="text-xl">in</span>
+          <span class="text-xl">X</span>
+          <span class="text-xl">ig</span>
+        </div>
+      </section>
+
+      <section id="dealsPanel" class="hidden min-h-[75vh]">
+        <div class="mx-auto max-w-5xl">
+          <div class="text-center">
+            <p class="text-3xl text-zinc-300">Deal Explorer</p>
+            <h1 class="hero-name mt-2 text-5xl font-bold uppercase sm:text-6xl">LATEST FREEBIES</h1>
+            <p id="statsText" class="mt-4 text-sm text-zinc-400">Loading deals...</p>
+          </div>
+
+          <div class="mt-8 border-y editorial-line py-5">
+            <div class="grid grid-cols-1 gap-3 md:grid-cols-5">
+              <input id="searchInput" type="text" placeholder="Search freebies..." class="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none" />
+              <select id="minVotesSelect" class="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none">
+              <option value="0">All vote ranges</option>
+              <option value="10">10+ votes</option>
+              <option value="50">50+ votes</option>
+              <option value="100">100+ votes</option>
+              <option value="300">300+ votes</option>
+              </select>
+              <select id="sortSelect" class="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none">
+              <option value="newest">Sort: New to old</option>
+              <option value="oldest">Sort: Old to new</option>
+              <option value="votes_desc">Sort: Votes high to low</option>
+              <option value="votes_asc">Sort: Votes low to high</option>
+              <option value="title_asc">Sort: Title A-Z</option>
+              <option value="category_asc">Sort: Category A-Z</option>
+              </select>
+              <select id="locationSelect" class="rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm outline-none">
+              <option value="NSW">Location: NSW</option>
+              <option value="ALL">Location: All regions</option>
+              <option value="QLD">Location: QLD</option>
+              <option value="VIC">Location: VIC</option>
+              <option value="WA">Location: WA</option>
+              <option value="SA">Location: SA</option>
+              <option value="ACT">Location: ACT</option>
+              <option value="TAS">Location: TAS</option>
+              <option value="NT">Location: NT</option>
+              </select>
+              <label class="flex items-center justify-between rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm">
+              SVG previews only
+              <input id="svgOnlyToggle" type="checkbox" class="h-4 w-4 accent-cyan-400" />
+              </label>
+            </div>
+          </div>
+
+          <div id="categoryBar" class="mt-5 flex flex-wrap justify-center gap-3"></div>
+
+          <section class="mt-8">
+            <h2 class="mb-4 text-center text-lg font-semibold">Active freebies</h2>
+            <div id="dealsGrid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"></div>
+            <p id="emptyState" class="hidden rounded-xl border border-white/10 bg-white/5 p-6 text-center text-zinc-300">No deals match this category yet.</p>
+            <h2 class="mb-4 mt-10 text-center text-lg font-semibold text-zinc-500">Expired freebies</h2>
+            <div id="expiredGrid" class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3"></div>
+          </section>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        deals: [],
+        selectedCategory: "All",
+        minVotes: 0,
+        sortBy: "newest",
+        query: "",
+        svgOnly: false,
+        selectedLocation: "NSW",
+        scrapeStatus: {},
+        activeTab: "home",
+      };
+
+      const categoryBar = document.getElementById("categoryBar");
+      const dealsGrid = document.getElementById("dealsGrid");
+      const emptyState = document.getElementById("emptyState");
+      const statsText = document.getElementById("statsText");
+      const searchInput = document.getElementById("searchInput");
+      const minVotesSelect = document.getElementById("minVotesSelect");
+      const sortSelect = document.getElementById("sortSelect");
+      const svgOnlyToggle = document.getElementById("svgOnlyToggle");
+      const locationSelect = document.getElementById("locationSelect");
+      const expiredGrid = document.getElementById("expiredGrid");
+      const topTabs = document.getElementById("topTabs");
+      const homePanel = document.getElementById("homePanel");
+      const dealsPanel = document.getElementById("dealsPanel");
+
+      function toTitleCase(text) {
+        return text.toLowerCase().split(" ").map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word)).join(" ");
+      }
+
+      function formatDealTitle(rawTitle, category) {
+        const cleaned = (rawTitle || "").replace(/^\[[^\]]+\]\s*/g, "").replace(/\bfree\s*[:\-]\s*/gi, "").replace(/\s+/g, " ").trim();
+        return `${category || "General"} Freebie: ${toTitleCase(cleaned || "Untitled Freebie")}`;
+      }
+
+      function pickCategoryAccent(category) {
+        const key = (category || "").toLowerCase();
+        if (key.includes("comput")) return "#22d3ee";
+        if (key.includes("education") || key.includes("book")) return "#a78bfa";
+        if (key.includes("food") || key.includes("drink")) return "#f97316";
+        if (key.includes("travel")) return "#34d399";
+        return "#60a5fa";
+      }
+
+      function svgPreview(deal) {
+        const accent = pickCategoryAccent(deal.category);
+        const cat = (deal.category || "General").replace(/&/g, "&amp;");
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700"><rect width="1200" height="700" fill="#000"/><rect x="40" y="40" width="1120" height="620" rx="28" fill="#050505" stroke="${accent}" stroke-opacity="0.55"/><text x="90" y="250" font-family="Inter,Arial,sans-serif" font-size="40" fill="#a1a1aa">${cat}</text><text x="90" y="345" font-family="Inter,Arial,sans-serif" font-size="84" font-weight="700" fill="#f5f5f5">FREEBIE</text></svg>`;
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+      }
+
+      function imageForDeal(deal) {
+        const image = deal.image_url || "";
+        const isGoodRemote = image.startsWith("http") && !image.includes("localhost") && !image.includes("127.0.0.1");
+        if (state.svgOnly) return svgPreview(deal);
+        return isGoodRemote ? image : svgPreview(deal);
+      }
+
+      function cardTemplate(deal, expired = false) {
+        const image = imageForDeal(deal);
+        const title = formatDealTitle(deal.title, deal.category || "General");
+        const cardTone = expired ? "opacity-30 saturate-0 brightness-75" : "brightness-110";
+        return `<a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="deal-card group panel block overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 ${cardTone}"><div class="relative"><img src="${image}" alt="${deal.title}" class="h-48 w-full object-cover"/><span class="absolute left-3 top-3 rounded-full border border-white/20 bg-black/60 px-3 py-1 text-xs">${deal.category || "General"}</span>${deal.is_new ? '<span class="absolute right-3 top-3 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-3 py-1 text-xs text-emerald-200">New</span>' : ""}${expired ? '<span class="absolute right-3 bottom-3 rounded-full border border-zinc-500/40 bg-zinc-700/50 px-3 py-1 text-xs text-zinc-300">Expired</span>' : ""}</div><div class="p-4"><h3 class="min-h-[3rem] text-base font-semibold">${title}</h3><div class="mt-4 flex items-center justify-between"><span class="text-sm text-zinc-400">${deal.posted_at ? new Date(deal.posted_at).toLocaleString() : "No date"}</span><span class="rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-sm text-amber-300">🔥 ${deal.votes ?? 0}</span></div></div></a>`;
+      }
+
+      function renderCategories() {
+        const base = [...new Set(state.deals.map((d) => d.category || "General"))].sort((a, b) => a.localeCompare(b));
+        const categories = ["All", "🔥 HOT", "✨ New", ...base];
+        categoryBar.innerHTML = categories.map((category) => {
+          const selected = category === state.selectedCategory;
+          return `<button data-category="${category}" class="rounded-full border px-4 py-2 text-sm transition ${selected ? "border-white bg-white/20 text-white" : "border-white/20 bg-black/40 text-zinc-300 hover:border-white/40"}">${category}</button>`;
+        }).join("");
+      }
+
+      function filteredAndSortedDeals() {
+        const active = state.deals.filter((d) => !d.is_expired).filter((d) => {
+          const locations = Array.isArray(d.locations) ? d.locations : [];
+          if (state.selectedLocation === "ALL") return true;
+          if (locations.length === 0) return true;
+          return locations.includes(state.selectedLocation);
+        });
+        let byCategory = active;
+        if (state.selectedCategory === "🔥 HOT") byCategory = [...active].sort((a, b) => (b.votes || 0) - (a.votes || 0)).slice(0, 10);
+        else if (state.selectedCategory === "✨ New") byCategory = active.filter((d) => d.is_new);
+        else if (state.selectedCategory !== "All") byCategory = active.filter((d) => (d.category || "General") === state.selectedCategory);
+
+        let out = byCategory.filter((d) => (d.votes || 0) >= state.minVotes);
+        out = out.filter((d) => `${d.title || ""} ${d.category || ""}`.toLowerCase().includes(state.query));
+        if (state.sortBy === "newest") out.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
+        if (state.sortBy === "oldest") out.sort((a, b) => new Date(a.posted_at || 0) - new Date(b.posted_at || 0));
+        if (state.sortBy === "votes_asc") out.sort((a, b) => (a.votes || 0) - (b.votes || 0));
+        if (state.sortBy === "votes_desc") out.sort((a, b) => (b.votes || 0) - (a.votes || 0));
+        if (state.sortBy === "title_asc") out.sort((a, b) => (a.title || "").localeCompare(b.title || ""));
+        if (state.sortBy === "category_asc") out.sort((a, b) => (a.category || "General").localeCompare(b.category || "General"));
+        return out;
+      }
+
+      function renderDeals() {
+        const visibleDeals = filteredAndSortedDeals();
+        dealsGrid.innerHTML = visibleDeals.map((d, idx) => cardTemplate(d, false).replace("deal-card", `deal-card" style="animation-delay:${Math.min(idx * 40, 380)}ms`)).join("");
+        emptyState.classList.toggle("hidden", visibleDeals.length > 0);
+
+        const expired = state.deals.filter((d) => d.is_expired).filter((d) => {
+          const locations = Array.isArray(d.locations) ? d.locations : [];
+          if (state.selectedLocation === "ALL") return true;
+          if (locations.length === 0) return true;
+          return locations.includes(state.selectedLocation);
+        });
+        expiredGrid.innerHTML = expired
+          .sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0))
+          .map((d) => cardTemplate(d, true))
+          .join("");
+
+        const status = state.scrapeStatus || {};
+        const lastRun = status.last_scraped_at ? new Date(status.last_scraped_at).toLocaleTimeString() : "n/a";
+        statsText.textContent = `${visibleDeals.length} shown / ${state.deals.length} total | Last scrape: ${lastRun} | Scraped: ${status.scraped_count ?? "n/a"} | New: ${status.new_count ?? "n/a"} | Auto: every 15 min`;
+      }
+
+      function renderTabUI() {
+        const isHome = state.activeTab === "home";
+        homePanel.classList.toggle("hidden", !isHome);
+        dealsPanel.classList.toggle("hidden", isHome);
+        topTabs.querySelectorAll("button[data-tab]").forEach((btn) => {
+          btn.classList.toggle("text-white", btn.dataset.tab === state.activeTab);
+          btn.classList.toggle("text-zinc-300", btn.dataset.tab !== state.activeTab);
+        });
+      }
+
+      categoryBar.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-category]");
+        if (!button) return;
+        state.selectedCategory = button.dataset.category;
+        renderCategories();
+        renderDeals();
+      });
+      searchInput.addEventListener("input", (event) => { state.query = event.target.value.trim().toLowerCase(); renderDeals(); });
+      minVotesSelect.addEventListener("change", (event) => { state.minVotes = Number(event.target.value || 0); renderDeals(); });
+      sortSelect.addEventListener("change", (event) => { state.sortBy = event.target.value; renderDeals(); });
+      svgOnlyToggle.addEventListener("change", (event) => { state.svgOnly = event.target.checked; renderDeals(); });
+      locationSelect.addEventListener("change", (event) => { state.selectedLocation = event.target.value; renderDeals(); });
+
+      topTabs.addEventListener("click", (event) => {
+        const btn = event.target.closest("button[data-tab]");
+        if (!btn) return;
+        state.activeTab = btn.dataset.tab;
+        renderTabUI();
+      });
+
+      async function initialize() {
+        try {
+          const [dealsResponse, statusResponse] = await Promise.all([fetch("/deals.json"), fetch("/scrape-status")]);
+          state.deals = await dealsResponse.json();
+          state.scrapeStatus = await statusResponse.json();
+          renderCategories();
+          renderDeals();
+        } catch (error) {
+          emptyState.classList.remove("hidden");
+          emptyState.textContent = "Unable to load deals.json. Run scraper.py first.";
+        }
+        renderTabUI();
+      }
+
+      initialize();
+    </script>
+  </body>
+</html>
