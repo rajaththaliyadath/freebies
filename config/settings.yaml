@@ -1,0 +1,14 @@
+title: Rajath Command Center
+theme: dark
+color: slate
+headerStyle: clean
+
+layout:
+  Developer Command Center:
+    style: row
+    columns: 3
+
+providers:
+  docker:
+    local-docker:
+      socket: /var/run/docker.sock

@@ -1,0 +1,19 @@
+- Developer Command Center:
+    - My Portfolio:
+        icon: mdi-web
+        href: https://rajatht.me
+        description: Personal portfolio and projects.
+
+    - OzBargain Bot:
+        icon: mdi-robot
+        description: Production scraper container health and uptime.
+        server: local-docker
+        container: freebies-agent
+        widget:
+          type: docker
+          container: freebies-agent
+
+    - Freebies Tracker:
+        icon: mdi-gift
+        href: https://www.ozbargain.com.au/tag/free
+        description: Live source feed for tracked freebie posts.
