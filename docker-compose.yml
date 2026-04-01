@@ -1,0 +1,14 @@
+services:
+  freebies-agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: freebies-agent
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./.env:/app/.env:ro
+      - ./data:/app/data
+    environment:
+      - SQLITE_PATH=/app/data/deals.db
