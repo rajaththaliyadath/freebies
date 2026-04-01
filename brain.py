@@ -85,6 +85,11 @@ class DealBrain:
 
     def classify(self, title: str, description: str) -> Decision:
         """Route classification to selected provider."""
+        # Fallback mode for environments without LLM credentials.
+        if self.provider == "openai" and not self.openai_client:
+            return "TRUE"
+        if self.provider == "anthropic" and not self.anthropic_client:
+            return "TRUE"
         if self.provider == "anthropic":
             return self._classify_anthropic(title, description)
         return self._classify_openai(title, description)
