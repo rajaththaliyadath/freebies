@@ -1,13 +1,16 @@
 import json
 import random
 import re
+import sys
 import time
 import urllib.request
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 
+import cloudscraper
 from bs4 import BeautifulSoup
 from playwright.sync_api import sync_playwright
 
@@ -29,6 +32,13 @@ STUDENT_BEANS_PAGES = [
 UNIDAYS_BRAND_URL = "https://www.myunidays.com/AU/en-AU/all-brands"
 BASE_STUDENT_BEANS = "https://www.studentbeans.com"
 BASE_UNIDAYS = "https://www.myunidays.com"
+SLICKDEALS_RSS_URLS = [
+    "https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1",
+    "https://slickdeals.net/newsearch.php?mode=popdeals&searcharea=deals&rss=1",
+    "https://slickdeals.net/newsearch.php?mode=hotdeals&searcharea=deals&rss=1",
+]
+CONTENT_ENCODED_TAG = "{http://purl.org/rss/1.0/modules/content/}encoded"
+RSSIMAGE_FROM_HTML = re.compile(r'<img[^>]+src=["\']([^"\']+)["\']', re.I)
 
 DEALS_FILE = Path("deals.json")
 SCRAPE_META_FILE = Path("scrape_meta.json")
@@ -92,6 +102,10 @@ def parse_discount_label(text: str) -> str:
 
 def infer_deal_type(title: str, discount_label: str, source: str) -> str:
     t = (title or "").lower()
+    if source == "slickdeals":
+        if re.search(r"\bfree\b", t) and not re.search(r"[\$£€]\s*\d", t) and "%" not in t[:120]:
+            return "free"
+        return "discount"
     if source == "ozbargain":
         if "free" in t and "%" not in t[:80]:
             return "free"
@@ -455,6 +469,111 @@ def scrape_unidays() -> List[Dict]:
     return scraped
 
 
+def _cloud_scraper() -> "cloudscraper.CloudScraper":
+    if sys.platform.startswith("linux"):
+        plat = "linux"
+    elif sys.platform.startswith("win"):
+        plat = "windows"
+    else:
+        plat = "darwin"
+    return cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": plat, "mobile": False}
+    )
+
+
+def _strip_url_query(url: str) -> str:
+    try:
+        parts = urlparse(url)
+        return urlunparse((parts.scheme, parts.netloc, parts.path, "", "", ""))
+    except Exception:
+        return url
+
+
+def _parse_slickdeals_pub_date(raw: str) -> str:
+    raw = (raw or "").strip()
+    for fmt in ("%a, %d %b %y %H:%M:%S %z", "%a, %d %b %Y %H:%M:%S %z"):
+        try:
+            return datetime.strptime(raw, fmt).isoformat()
+        except ValueError:
+            continue
+    return datetime.now().isoformat()
+
+
+def scrape_slickdeals() -> List[Dict]:
+    scraped: List[Dict] = []
+    seen_paths: Set[str] = set()
+    scraper = _cloud_scraper()
+    for rss_url in SLICKDEALS_RSS_URLS:
+        try:
+            resp = scraper.get(rss_url, timeout=45)
+        except Exception:
+            continue
+        ctype = (resp.headers.get("content-type") or "").lower()
+        if resp.status_code != 200 or "xml" not in ctype:
+            continue
+        try:
+            root = ET.fromstring(resp.text)
+        except ET.ParseError:
+            continue
+        for item in root.findall(".//item"):
+            title_el = item.find("title")
+            link_el = item.find("link")
+            pub_el = item.find("pubDate")
+            cat_el = item.find("category")
+            enc_el = item.find(CONTENT_ENCODED_TAG)
+            title = (title_el.text or "").strip() if title_el is not None and title_el.text else ""
+            link = (link_el.text or "").strip() if link_el is not None and link_el.text else ""
+            if not title or not link:
+                continue
+            link_clean = _strip_url_query(link)
+            path_key = urlparse(link_clean).path
+            if path_key in seen_paths:
+                continue
+            seen_paths.add(path_key)
+
+            encoded = (enc_el.text or "") if enc_el is not None and enc_el.text else ""
+            img_m = RSSIMAGE_FROM_HTML.search(encoded)
+            image_url = img_m.group(1) if img_m else ""
+            if image_url.startswith("//"):
+                image_url = f"https:{image_url}"
+
+            raw_cat = (cat_el.text or "Slickdeals").strip() if cat_el is not None and cat_el.text else "Slickdeals"
+            pub = _parse_slickdeals_pub_date(pub_el.text if pub_el is not None and pub_el.text else "")
+
+            discount_label = parse_discount_label(title)
+            if not discount_label and re.search(r"[\$£€]", title):
+                price_m = re.search(
+                    r"(?:from\s+)?[\$£€]\s*[\d,.]+(?:\s*-\s*[\$£€]?\s*[\d,.]+)?",
+                    title,
+                    re.I,
+                )
+                if price_m:
+                    discount_label = price_m.group(0).strip()
+            if not discount_label:
+                discount_label = "Deal"
+
+            topic = infer_topic(title, raw_cat)
+            deal_type = infer_deal_type(title, discount_label, "slickdeals")
+
+            scraped.append(
+                {
+                    "title": title,
+                    "link": link_clean,
+                    "image_url": image_url,
+                    "category": topic,
+                    "source_category": raw_cat,
+                    "votes": 0,
+                    "posted_at": pub,
+                    "locations": [],
+                    "is_expired": bool(re.search(r"\bexpired\b", title, re.I)),
+                    "source": "slickdeals",
+                    "deal_type": deal_type,
+                    "discount_label": discount_label,
+                }
+            )
+    return scraped
+
+
 def migrate_deal_fields(deal: Dict) -> Dict:
     d = dict(deal)
     if "source" not in d:
@@ -508,7 +627,8 @@ def run_scrape_cycle() -> Dict:
     oz = scrape_ozbargain()
     sb = scrape_student_beans()
     ud = scrape_unidays()
-    fresh = oz + sb + ud
+    sd = scrape_slickdeals()
+    fresh = oz + sb + ud + sd
     all_deals, fresh_count = deduplicate_deals(existing, fresh)
     scraped_at = datetime.now().isoformat()
     for deal in all_deals:
@@ -520,6 +640,7 @@ def run_scrape_cycle() -> Dict:
         "scraped_ozbargain": len(oz),
         "scraped_studentbeans": len(sb),
         "scraped_unidays": len(ud),
+        "scraped_slickdeals": len(sd),
         "new_count": fresh_count,
         "total_count": len(all_deals),
     }
@@ -532,6 +653,7 @@ def main() -> None:
     print(
         f"Last: {meta['last_scraped_at']} | OzB: {meta['scraped_ozbargain']} | "
         f"StudentBeans: {meta['scraped_studentbeans']} | UNiDAYS: {meta['scraped_unidays']} | "
+        f"Slickdeals: {meta['scraped_slickdeals']} | "
         f"New: {meta['new_count']} | Total: {meta['total_count']}"
     )
 

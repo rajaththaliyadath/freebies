@@ -1,4 +1,5 @@
 playwright
 beautifulsoup4
+cloudscraper
 flask
 python-dotenv

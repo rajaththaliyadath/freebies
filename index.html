@@ -110,6 +110,7 @@
                 <option value="ozbargain">Source: OzBargain</option>
                 <option value="studentbeans">Source: Student Beans</option>
                 <option value="unidays">Source: UNiDAYS</option>
+                <option value="slickdeals">Source: Slickdeals</option>
               </select>
               <select id="minVotesSelect" class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm">
               <option value="0">All vote ranges</option>
@@ -195,7 +196,7 @@
       function formatDealTitle(deal) {
         const category = deal.category || "General";
         const raw = (deal.title || "").replace(/\s+—\s*UNiDAYS student offer\s*$/i, "").trim();
-        if (deal.source === "studentbeans" || deal.source === "unidays") {
+        if (deal.source === "studentbeans" || deal.source === "unidays" || deal.source === "slickdeals") {
           const short = toTitleCase(raw.slice(0, 160) || "Offer");
           return `${category}: ${short}`;
         }
@@ -207,6 +208,7 @@
       function sourceLabel(src) {
         if (src === "studentbeans") return "Student Beans";
         if (src === "unidays") return "UNiDAYS";
+        if (src === "slickdeals") return "Slickdeals";
         return "OzBargain";
       }
 
@@ -313,10 +315,13 @@
         const oz = status.scraped_ozbargain;
         const sb = status.scraped_studentbeans;
         const ud = status.scraped_unidays;
+        const sd = status.scraped_slickdeals;
         const breakdown =
-          oz != null && sb != null && ud != null
-            ? ` · Oz ${oz} · Beans ${sb} · UNiDAYS ${ud}`
-            : "";
+          oz != null && sb != null && ud != null && sd != null
+            ? ` · Oz ${oz} · Beans ${sb} · UNiDAYS ${ud} · SD ${sd}`
+            : oz != null && sb != null && ud != null
+              ? ` · Oz ${oz} · Beans ${sb} · UNiDAYS ${ud}`
+              : "";
         const line2 = `Last scrape: ${lastRun} · Scraped: ${status.scraped_count ?? "n/a"}${breakdown} · New: ${status.new_count ?? "n/a"}`;
         const line3 = "Auto refresh: every 15 min";
         statsText.innerHTML = `<span class="block sm:inline">${line1}</span><span class="mx-1 hidden sm:inline"> | </span><span class="block sm:inline">${line2}</span><span class="mx-1 hidden sm:inline"> | </span><span class="block sm:inline">${line3}</span>`;
