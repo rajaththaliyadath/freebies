@@ -98,13 +98,19 @@
         <div class="mx-auto min-w-0 max-w-5xl px-0 sm:px-1">
           <div class="text-center">
             <p class="text-xl text-zinc-300 sm:text-3xl">Deal Explorer</p>
-            <h1 class="hero-name mt-2 max-w-full break-words text-3xl font-bold uppercase leading-tight sm:text-5xl md:text-6xl">LATEST FREEBIES</h1>
+            <h1 class="hero-name mt-2 max-w-full break-words text-3xl font-bold uppercase leading-tight sm:text-5xl md:text-6xl">DEALS &amp; FREE</h1>
             <p id="statsText" class="mx-auto mt-4 max-w-full px-1 text-center text-[11px] leading-relaxed text-zinc-400 sm:text-sm">Loading deals...</p>
           </div>
 
           <div class="mt-6 border-y editorial-line py-4 sm:mt-8 sm:py-5">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-              <input id="searchInput" type="text" placeholder="Search freebies..." class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm" />
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <input id="searchInput" type="text" placeholder="Search deals, brands, discounts…" class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm" />
+              <select id="sourceSelect" class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm">
+                <option value="ALL">Source: All</option>
+                <option value="ozbargain">Source: OzBargain</option>
+                <option value="studentbeans">Source: Student Beans</option>
+                <option value="unidays">Source: UNiDAYS</option>
+              </select>
               <select id="minVotesSelect" class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm">
               <option value="0">All vote ranges</option>
               <option value="10">10+ votes</option>
@@ -112,6 +118,8 @@
               <option value="100">100+ votes</option>
               <option value="300">300+ votes</option>
               </select>
+            </div>
+            <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <select id="sortSelect" class="min-h-[44px] w-full min-w-0 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-base outline-none sm:text-sm">
               <option value="newest">Sort: New to old</option>
               <option value="oldest">Sort: Old to new</option>
@@ -131,7 +139,7 @@
               <option value="TAS">Location: TAS</option>
               <option value="NT">Location: NT</option>
               </select>
-              <label class="flex min-h-[44px] w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm">
+              <label class="flex min-h-[44px] w-full min-w-0 cursor-pointer items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/40 px-4 py-3 text-sm sm:col-span-2 lg:col-span-1">
               <span class="min-w-0 flex-1">SVG previews only</span>
               <input id="svgOnlyToggle" type="checkbox" class="h-5 w-5 shrink-0 accent-cyan-400" />
               </label>
@@ -141,7 +149,7 @@
           <div id="categoryBar" class="mt-5 flex flex-wrap justify-center gap-2 sm:gap-3"></div>
 
           <section class="mt-8">
-            <h2 class="mb-4 text-center text-base font-semibold sm:text-lg">Active freebies</h2>
+            <h2 class="mb-4 text-center text-base font-semibold sm:text-lg">Active deals</h2>
             <div id="dealsGrid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-3"></div>
             <p id="emptyState" class="hidden rounded-xl border border-white/10 bg-white/5 p-6 text-center text-zinc-300">No deals match this category yet.</p>
             <h2 class="mb-4 mt-10 text-center text-base font-semibold text-zinc-500 sm:text-lg">Expired freebies</h2>
@@ -160,6 +168,7 @@
         query: "",
         svgOnly: false,
         selectedLocation: "NSW",
+        selectedSource: "ALL",
         scrapeStatus: {},
         activeTab: "home",
       };
@@ -173,6 +182,7 @@
       const sortSelect = document.getElementById("sortSelect");
       const svgOnlyToggle = document.getElementById("svgOnlyToggle");
       const locationSelect = document.getElementById("locationSelect");
+      const sourceSelect = document.getElementById("sourceSelect");
       const expiredGrid = document.getElementById("expiredGrid");
       const topTabs = document.getElementById("topTabs");
       const homePanel = document.getElementById("homePanel");
@@ -182,17 +192,35 @@
         return text.toLowerCase().split(" ").map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word)).join(" ");
       }
 
-      function formatDealTitle(rawTitle, category) {
-        const cleaned = (rawTitle || "").replace(/^\[[^\]]+\]\s*/g, "").replace(/\bfree\s*[:\-]\s*/gi, "").replace(/\s+/g, " ").trim();
-        return `${category || "General"} Freebie: ${toTitleCase(cleaned || "Untitled Freebie")}`;
+      function formatDealTitle(deal) {
+        const category = deal.category || "General";
+        const raw = (deal.title || "").replace(/\s+—\s*UNiDAYS student offer\s*$/i, "").trim();
+        if (deal.source === "studentbeans" || deal.source === "unidays") {
+          const short = toTitleCase(raw.slice(0, 160) || "Offer");
+          return `${category}: ${short}`;
+        }
+        const cleaned = raw.replace(/^\[[^\]]+\]\s*/g, "").replace(/\bfree\s*[:\-]\s*/gi, "").replace(/\s+/g, " ").trim();
+        const kind = deal.deal_type === "discount" ? "Deal" : "Freebie";
+        return `${category} ${kind}: ${toTitleCase(cleaned || "Untitled")}`;
+      }
+
+      function sourceLabel(src) {
+        if (src === "studentbeans") return "Student Beans";
+        if (src === "unidays") return "UNiDAYS";
+        return "OzBargain";
       }
 
       function pickCategoryAccent(category) {
         const key = (category || "").toLowerCase();
-        if (key.includes("comput")) return "#22d3ee";
+        if (key.includes("shoe")) return "#fb923c";
+        if (key.includes("gaming") || key.includes("game")) return "#c084fc";
+        if (key.includes("food")) return "#f97316";
+        if (key.includes("tech") || key.includes("comput")) return "#22d3ee";
+        if (key.includes("fashion")) return "#f472b6";
+        if (key.includes("beauty")) return "#f9a8d4";
         if (key.includes("education") || key.includes("book")) return "#a78bfa";
-        if (key.includes("food") || key.includes("drink")) return "#f97316";
         if (key.includes("travel")) return "#34d399";
+        if (key.includes("sport")) return "#4ade80";
         return "#60a5fa";
       }
 
@@ -212,9 +240,16 @@
 
       function cardTemplate(deal, expired = false) {
         const image = imageForDeal(deal);
-        const title = formatDealTitle(deal.title, deal.category || "General");
+        const title = formatDealTitle(deal);
         const cardTone = expired ? "opacity-30 saturate-0 brightness-75" : "brightness-110";
-        return `<a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="deal-card group panel block min-w-0 overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 ${cardTone}"><div class="relative"><img src="${image}" alt="" class="h-40 w-full object-cover sm:h-48"/><span class="absolute left-2 top-2 max-w-[calc(100%-5rem)] truncate rounded-full border border-white/20 bg-black/60 px-2 py-1 text-[10px] sm:left-3 sm:top-3 sm:max-w-[55%] sm:px-3 sm:text-xs">${deal.category || "General"}</span>${deal.is_new ? '<span class="absolute right-2 top-2 rounded-full border border-emerald-400/40 bg-emerald-500/20 px-2 py-1 text-[10px] text-emerald-200 sm:right-3 sm:top-3 sm:px-3 sm:text-xs">New</span>' : ""}${expired ? '<span class="absolute bottom-2 right-2 rounded-full border border-zinc-500/40 bg-zinc-700/50 px-2 py-1 text-[10px] text-zinc-300 sm:bottom-3 sm:right-3 sm:px-3 sm:text-xs">Expired</span>' : ""}</div><div class="p-3 sm:p-4"><h3 class="text-sm font-semibold leading-snug sm:min-h-[3rem] sm:text-base">${title}</h3><div class="mt-3 flex flex-col gap-2 sm:mt-4 sm:flex-row sm:items-center sm:justify-between"><span class="order-2 break-words text-xs text-zinc-400 sm:order-1 sm:max-w-[60%] sm:text-sm">${deal.posted_at ? new Date(deal.posted_at).toLocaleString() : "No date"}</span><span class="order-1 inline-flex w-fit shrink-0 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-sm text-amber-300 sm:order-2">🔥 ${deal.votes ?? 0}</span></div></div></a>`;
+        const src = deal.source || "ozbargain";
+        const dt = deal.deal_type === "free" ? "Free" : "Discount";
+        const dl = deal.discount_label ? `<p class="mt-1 text-xs text-cyan-200/90">${deal.discount_label}</p>` : "";
+        const voteOrDeal = (deal.votes || 0) > 0 ? `🔥 ${deal.votes}` : `<span class="text-amber-200/80">${dt}</span>`;
+        const newBadge = deal.is_new
+          ? '<span class="absolute bottom-2 left-2 rounded-full border border-emerald-400/40 bg-emerald-500/25 px-2 py-0.5 text-[10px] text-emerald-100">New</span>'
+          : "";
+        return `<a href="${deal.link}" target="_blank" rel="noopener noreferrer" class="deal-card group panel block min-w-0 overflow-hidden rounded-2xl transition-all duration-300 hover:-translate-y-1 ${cardTone}"><div class="relative"><img src="${image}" alt="" class="h-40 w-full object-cover sm:h-48"/><span class="absolute left-2 top-2 max-w-[55%] truncate rounded-full border border-white/20 bg-black/70 px-2 py-1 text-[10px] sm:left-3 sm:top-3 sm:max-w-[50%] sm:px-3 sm:text-xs">${deal.category || "General"}</span><span class="absolute right-2 top-2 max-w-[45%] truncate rounded-full border border-violet-400/35 bg-violet-950/70 px-2 py-1 text-[9px] text-violet-100 sm:text-[10px]">${sourceLabel(src)}</span>${newBadge}${expired ? '<span class="absolute bottom-2 right-2 rounded-full border border-zinc-500/40 bg-zinc-700/50 px-2 py-1 text-[10px] text-zinc-300 sm:bottom-3 sm:right-3 sm:px-3 sm:text-xs">Expired</span>' : ""}</div><div class="p-3 sm:p-4"><div class="flex flex-wrap gap-1.5"><span class="rounded-md border border-white/15 bg-white/5 px-2 py-0.5 text-[10px] uppercase tracking-wide text-zinc-300">${dt}</span></div><h3 class="mt-2 text-sm font-semibold leading-snug sm:min-h-[3rem] sm:text-base">${title}</h3>${dl}<div class="mt-3 flex flex-col gap-2 sm:mt-4 sm:flex-row sm:items-center sm:justify-between"><span class="order-2 break-words text-xs text-zinc-400 sm:order-1 sm:max-w-[60%] sm:text-sm">${deal.posted_at ? new Date(deal.posted_at).toLocaleString() : "No date"}</span><span class="order-1 inline-flex w-fit shrink-0 rounded-lg border border-amber-400/30 bg-amber-500/10 px-3 py-1.5 text-sm text-amber-300 sm:order-2">${voteOrDeal}</span></div></div></a>`;
       }
 
       function renderCategories() {
@@ -238,8 +273,12 @@
         else if (state.selectedCategory === "✨ New") byCategory = active.filter((d) => d.is_new);
         else if (state.selectedCategory !== "All") byCategory = active.filter((d) => (d.category || "General") === state.selectedCategory);
 
-        let out = byCategory.filter((d) => (d.votes || 0) >= state.minVotes);
-        out = out.filter((d) => `${d.title || ""} ${d.category || ""}`.toLowerCase().includes(state.query));
+        let out = byCategory;
+        if (state.selectedSource !== "ALL") out = out.filter((d) => (d.source || "ozbargain") === state.selectedSource);
+        out = out.filter((d) => (d.votes || 0) >= state.minVotes);
+        out = out.filter((d) =>
+          `${d.title || ""} ${d.category || ""} ${d.discount_label || ""} ${d.source || ""}`.toLowerCase().includes(state.query)
+        );
         if (state.sortBy === "newest") out.sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0));
         if (state.sortBy === "oldest") out.sort((a, b) => new Date(a.posted_at || 0) - new Date(b.posted_at || 0));
         if (state.sortBy === "votes_asc") out.sort((a, b) => (a.votes || 0) - (b.votes || 0));
@@ -254,12 +293,15 @@
         dealsGrid.innerHTML = visibleDeals.map((d, idx) => cardTemplate(d, false).replace("deal-card", `deal-card" style="animation-delay:${Math.min(idx * 40, 380)}ms`)).join("");
         emptyState.classList.toggle("hidden", visibleDeals.length > 0);
 
-        const expired = state.deals.filter((d) => d.is_expired).filter((d) => {
-          const locations = Array.isArray(d.locations) ? d.locations : [];
-          if (state.selectedLocation === "ALL") return true;
-          if (locations.length === 0) return true;
-          return locations.includes(state.selectedLocation);
-        });
+        const expired = state.deals
+          .filter((d) => d.is_expired)
+          .filter((d) => {
+            const locations = Array.isArray(d.locations) ? d.locations : [];
+            if (state.selectedLocation === "ALL") return true;
+            if (locations.length === 0) return true;
+            return locations.includes(state.selectedLocation);
+          })
+          .filter((d) => state.selectedSource === "ALL" || (d.source || "ozbargain") === state.selectedSource);
         expiredGrid.innerHTML = expired
           .sort((a, b) => new Date(b.posted_at || 0) - new Date(a.posted_at || 0))
           .map((d) => cardTemplate(d, true))
@@ -268,7 +310,14 @@
         const status = state.scrapeStatus || {};
         const lastRun = status.last_scraped_at ? new Date(status.last_scraped_at).toLocaleTimeString() : "n/a";
         const line1 = `${visibleDeals.length} shown · ${state.deals.length} total`;
-        const line2 = `Last scrape: ${lastRun} · Scraped: ${status.scraped_count ?? "n/a"} · New: ${status.new_count ?? "n/a"}`;
+        const oz = status.scraped_ozbargain;
+        const sb = status.scraped_studentbeans;
+        const ud = status.scraped_unidays;
+        const breakdown =
+          oz != null && sb != null && ud != null
+            ? ` · Oz ${oz} · Beans ${sb} · UNiDAYS ${ud}`
+            : "";
+        const line2 = `Last scrape: ${lastRun} · Scraped: ${status.scraped_count ?? "n/a"}${breakdown} · New: ${status.new_count ?? "n/a"}`;
         const line3 = "Auto refresh: every 15 min";
         statsText.innerHTML = `<span class="block sm:inline">${line1}</span><span class="mx-1 hidden sm:inline"> | </span><span class="block sm:inline">${line2}</span><span class="mx-1 hidden sm:inline"> | </span><span class="block sm:inline">${line3}</span>`;
       }
@@ -295,6 +344,7 @@
       sortSelect.addEventListener("change", (event) => { state.sortBy = event.target.value; renderDeals(); });
       svgOnlyToggle.addEventListener("change", (event) => { state.svgOnly = event.target.checked; renderDeals(); });
       locationSelect.addEventListener("change", (event) => { state.selectedLocation = event.target.value; renderDeals(); });
+      sourceSelect.addEventListener("change", (event) => { state.selectedSource = event.target.value; renderDeals(); });
 
       topTabs.addEventListener("click", (event) => {
         const btn = event.target.closest("button[data-tab]");
